@@ -4,9 +4,156 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 
 namespace DepotDownloader
 {
+    // Hack to add current and new code to SteamKit2 because I'm too lazy to rebuild it
+    // TODO: add to SteamKit2 itself and then bump version requirement
+    public static class SteamAppsExtensions
+    {
+        [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"CMsgClientCheckAppBetaPassword")]
+        public partial class CMsgClientCheckAppBetaPassword : global::ProtoBuf.IExtensible
+        {
+            public CMsgClientCheckAppBetaPassword() {}
+            
+        
+            private uint _app_id = default(uint);
+            [global::ProtoBuf.ProtoMember(1, IsRequired = false, Name=@"app_id", DataFormat = global::ProtoBuf.DataFormat.TwosComplement)]
+            [global::System.ComponentModel.DefaultValue(default(uint))]
+            public uint app_id
+            {
+            get { return _app_id; }
+            set { _app_id = value; }
+            }
+        
+            private string _betapassword = "";
+            [global::ProtoBuf.ProtoMember(2, IsRequired = false, Name=@"betapassword", DataFormat = global::ProtoBuf.DataFormat.Default)]
+            [global::System.ComponentModel.DefaultValue("")]
+            public string betapassword
+            {
+            get { return _betapassword; }
+            set { _betapassword = value; }
+            }
+            private global::ProtoBuf.IExtension extensionObject;
+            global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
+            { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
+        }
+        
+        [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"CMsgClientCheckAppBetaPasswordResponse")]
+        public partial class CMsgClientCheckAppBetaPasswordResponse : global::ProtoBuf.IExtensible
+        {
+            public CMsgClientCheckAppBetaPasswordResponse() {}
+            
+        
+            private int _eresult = (int)2;
+            [global::ProtoBuf.ProtoMember(1, IsRequired = false, Name=@"eresult", DataFormat = global::ProtoBuf.DataFormat.TwosComplement)]
+            [global::System.ComponentModel.DefaultValue((int)2)]
+            public int eresult
+            {
+            get { return _eresult; }
+            set { _eresult = value; }
+            }
+            private readonly global::System.Collections.Generic.List<CMsgClientCheckAppBetaPasswordResponse.BetaPassword> _betapasswords = new global::System.Collections.Generic.List<CMsgClientCheckAppBetaPasswordResponse.BetaPassword>();
+            [global::ProtoBuf.ProtoMember(4, Name=@"betapasswords", DataFormat = global::ProtoBuf.DataFormat.Default)]
+            public global::System.Collections.Generic.List<CMsgClientCheckAppBetaPasswordResponse.BetaPassword> betapasswords
+            {
+            get { return _betapasswords; }
+            }
+        
+            [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"BetaPassword")]
+            public partial class BetaPassword : global::ProtoBuf.IExtensible
+            {
+                public BetaPassword() {}
+                
+            
+                private string _betaname = "";
+                [global::ProtoBuf.ProtoMember(1, IsRequired = false, Name=@"betaname", DataFormat = global::ProtoBuf.DataFormat.Default)]
+                [global::System.ComponentModel.DefaultValue("")]
+                public string betaname
+                {
+                get { return _betaname; }
+                set { _betaname = value; }
+                }
+            
+                private string _betapassword = "";
+                [global::ProtoBuf.ProtoMember(2, IsRequired = false, Name=@"betapassword", DataFormat = global::ProtoBuf.DataFormat.Default)]
+                [global::System.ComponentModel.DefaultValue("")]
+                public string betapassword
+                {
+                get { return _betapassword; }
+                set { _betapassword = value; }
+                }
+                private global::ProtoBuf.IExtension extensionObject;
+                global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
+                { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
+            }
+        
+            private global::ProtoBuf.IExtension extensionObject;
+            global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
+            { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
+        }
+                
+        public sealed class BetaPasswordCallback : CallbackMsg
+        {
+            /// <summary>
+            /// Gets the result of requesting this beta branch + password
+            /// </summary>
+            public EResult Result { get; private set; }
+
+            /// <summary>
+            /// Gets the beta branch + password for this appid/password
+            /// </summary>
+            public List<CMsgClientCheckAppBetaPasswordResponse.BetaPassword> Password { get; private set; }
+
+
+            internal BetaPasswordCallback( JobID jobID, CMsgClientCheckAppBetaPasswordResponse msg )
+            {
+                JobID = jobID;
+
+                Result = ( EResult )msg.eresult;
+                Password = msg.betapasswords;
+            }
+        }
+
+        public static T GetPrivateField<T>(this object obj, string name)
+        {
+            BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+            Type type = obj.GetType();
+            FieldInfo field = type.GetField(name, flags);
+            return (T)field.GetValue(obj);
+        }
+        
+        public static T GetPrivateProperty<T>(this object obj, string name)
+        {
+            BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+            Type type = obj.GetType();
+            PropertyInfo field = type.GetProperty(name, flags);
+            return (T)field.GetValue(obj, null);
+        }
+              
+        public static JobID GetBetaPassword(this SteamApps app, uint appid, string betapassword)
+        {
+            var request = new ClientMsgProtobuf<CMsgClientCheckAppBetaPassword>( (EMsg)5450 );
+            SteamClient Client = GetPrivateProperty<SteamClient>(app, "Client");
+
+            request.SourceJobID = Client.GetNextJobID();
+            request.Body.app_id = appid;
+            request.Body.betapassword = betapassword;
+            
+            Client.Send( request );
+            return request.SourceJobID;
+        }
+        
+        public static void HandleBetaPasswordResponse(this SteamApps app, IPacketMsg packetMsg )
+        {
+            var passwordResponse = new ClientMsgProtobuf<CMsgClientCheckAppBetaPasswordResponse>( packetMsg );
+            var callback = new BetaPasswordCallback(passwordResponse.TargetJobID, passwordResponse.Body);
+            
+            SteamClient Client = GetPrivateProperty<SteamClient>(app, "Client");
+            Client.PostCallback( callback );
+        }         
+    }
 
     class Steam3Session
     {
@@ -30,6 +177,7 @@ namespace DepotDownloader
         public Dictionary<uint, byte[]> AppTickets { get; private set; }
         public Dictionary<uint, ulong> AppTokens { get; private set; }
         public Dictionary<uint, byte[]> DepotKeys { get; private set; }
+        public Dictionary<string, string> BetaPasswords { get; private set; }
         public Dictionary<Tuple<uint, string>, SteamApps.CDNAuthTokenCallback> CDNAuthTokens { get; private set; }
         public Dictionary<uint, SteamApps.PICSProductInfoCallback.PICSProductInfo> AppInfo { get; private set; }
         public Dictionary<uint, SteamApps.PICSProductInfoCallback.PICSProductInfo> PackageInfo { get; private set; }
@@ -70,6 +218,7 @@ namespace DepotDownloader
             this.AppTickets = new Dictionary<uint, byte[]>();
             this.AppTokens = new Dictionary<uint, ulong>();
             this.DepotKeys = new Dictionary<uint, byte[]>();
+            this.BetaPasswords = new Dictionary<string, string>();
             this.CDNAuthTokens = new Dictionary<Tuple<uint, string>, SteamApps.CDNAuthTokenCallback>();
             this.AppInfo = new Dictionary<uint, SteamApps.PICSProductInfoCallback.PICSProductInfo>();
             this.PackageInfo = new Dictionary<uint, SteamApps.PICSProductInfoCallback.PICSProductInfo>();
@@ -78,6 +227,11 @@ namespace DepotDownloader
 
             this.steamUser = this.steamClient.GetHandler<SteamUser>();
             this.steamApps = this.steamClient.GetHandler<SteamApps>();
+
+            // Kludge to add handler to SteamKit2 SteamApps
+            // TODO: update SteamKit2 itself instead and then bump version requirement
+            Dictionary<EMsg, Action<IPacketMsg>> dispatchMap = SteamAppsExtensions.GetPrivateField<Dictionary<EMsg, Action<IPacketMsg>>>(this.steamApps, "dispatchMap");    
+            dispatchMap.Add((EMsg)5451, this.steamApps.HandleBetaPasswordResponse);
 
             this.callbacks = new CallbackManager(this.steamClient);
 
@@ -306,6 +460,31 @@ namespace DepotDownloader
             WaitUntilCallback(() =>
             {
                 callbacks.Subscribe(steamApps.GetCDNAuthToken(depotid, host), cbMethod);
+            }, () => { return completed; });
+        }
+
+        public void CheckAppBetaPassword(uint appid, string betapassword)
+        {
+            bool completed = false;
+            Action<SteamAppsExtensions.BetaPasswordCallback> cbMethod = (response) =>
+            {
+                completed = true;
+                Console.WriteLine("Got beta branch key(s).");
+                if (response.Result != EResult.OK)
+                {
+                    Abort();
+                    return;
+                }
+                
+                foreach (var entry in response.Password)
+                {
+                    this.BetaPasswords[entry.betaname] = entry.betapassword;
+                }
+            };
+            
+            WaitUntilCallback(() =>
+            {
+                callbacks.Subscribe(steamApps.GetBetaPassword(appid, betapassword), cbMethod);
             }, () => { return completed; });
         }
 

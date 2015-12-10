@@ -170,5 +170,28 @@ namespace DepotDownloader
                 ( sb, v ) => sb.Append( v.ToString( "x2" ) )
                 ).ToString();
         }
+
+        public static byte[] AESDecryptECB( byte[] input, byte[] key )
+        {
+            using ( var aes = new RijndaelManaged() )
+            {
+                aes.KeySize = 256;
+                aes.Mode = CipherMode.ECB;
+
+                byte[] plainText = new byte[ input.Length ];
+                int outLen = 0;
+                                
+                using ( var aesTransform = aes.CreateDecryptor( key, null ) )
+                using ( var ms = new MemoryStream( input ) )
+                using ( var cs = new CryptoStream( ms, aesTransform, CryptoStreamMode.Read ) )
+                {
+                    outLen = cs.Read( plainText, 0, plainText.Length );
+                }
+                
+                byte[] output = new byte[ outLen ];
+                Array.Copy( plainText, 0, output, 0, output.Length );
+                return output;
+            }            
+        }
     }
 }

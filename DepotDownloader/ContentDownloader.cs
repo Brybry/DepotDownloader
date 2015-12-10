@@ -250,8 +250,28 @@ namespace DepotDownloader
                         Config.BetaPassword = password = Console.ReadLine();
                     }
 
-                    byte[] input = Util.DecodeHexString(node_encrypted["encrypted_gid"].Value);
-                    byte[] manifest_bytes = CryptoHelper.VerifyAndDecryptPassword(input, password);
+                    byte[] manifest_bytes = null;
+                    if (node_encrypted["encrypted_gid"] != KeyValue.Invalid)
+                    {
+                        byte[] input = Util.DecodeHexString(node_encrypted["encrypted_gid"].Value);
+                        manifest_bytes = CryptoHelper.VerifyAndDecryptPassword(input, password);
+                    }
+                    else if(node_encrypted["encrypted_gid_2"] != KeyValue.Invalid)
+                    {
+                        steam3.CheckAppBetaPassword(appId, password);
+                        
+                        string aesKey;
+                        if (!steam3.BetaPasswords.TryGetValue(branch, out aesKey))
+                        {
+                            Console.WriteLine("Couldn't find decryption key");
+                            return INVALID_MANIFEST_ID;
+                        }
+                        
+                        byte[] input = Util.DecodeHexString(node_encrypted["encrypted_gid_2"].Value);
+                        byte[] key = Util.DecodeHexString(aesKey);
+                        manifest_bytes = Util.AESDecryptECB(input, key);
+                    }
+
 
                     if (manifest_bytes == null)
                     {
