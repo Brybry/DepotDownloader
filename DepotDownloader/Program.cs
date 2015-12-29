@@ -109,7 +109,17 @@ namespace DepotDownloader
             }
 
             ContentDownloader.InitializeSteam3(username, password);
-            ContentDownloader.DownloadApp(appId, depotId, branch, forceDepot);
+            
+            uint workshopId = GetParameter<uint>(args, "-workshop", uint.MaxValue);
+            if (workshopId != uint.MaxValue)
+            {
+                ContentDownloader.DownloadWorkshopItem(appId, workshopId);
+            }
+            else
+            {
+                ContentDownloader.DownloadApp(appId, depotId, branch, forceDepot);
+            }
+            
             ContentDownloader.ShutdownSteam3();
         }
 
@@ -154,6 +164,7 @@ namespace DepotDownloader
             Console.WriteLine();
 
             Console.WriteLine( "Optional Parameters:" );
+            Console.WriteLine( "\t-workshop <#>\t\t\t- the WorkshopID to download." );
             Console.WriteLine( "\t-depot <#>\t\t\t- the DepotID to download." );
             Console.WriteLine( "\t-cellid <#>\t\t\t- the overridden CellID of the content server to download from." );
             Console.WriteLine( "\t-username <user>\t\t\t- the username of the account to login to for restricted content." );

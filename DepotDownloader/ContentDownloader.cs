@@ -326,6 +326,35 @@ namespace DepotDownloader
             steam3.Disconnect();
         }
 
+        public static void DownloadWorkshopItem(uint appId, uint workshopId)
+        {
+			if(steam3 != null)
+                steam3.RequestAppInfo(appId);
+
+            if (!AccountHasAccess(appId))
+            {
+                string contentName = GetAppOrDepotName(INVALID_DEPOT_ID, appId);
+                Console.WriteLine("App {0} ({1}) is not available from this account.", appId, contentName);
+                return;
+            }
+            var infos = new List<DepotDownloadInfo>();
+            
+            DepotDownloadInfo info = GetDepotInfo(workshopId, appId);
+            if (info != null)
+            {
+                infos.Add(info);
+            } 
+            
+            try
+            {
+                DownloadSteam3(infos);                
+            }
+            catch(OperationCanceledException)
+            {
+                Console.WriteLine("App {0} WorkshopItem {1} was not completely downloaded.", appId, workshopId);                
+            }
+        }
+
         public static void DownloadApp(uint appId, uint depotId, string branch, bool forceDepot = false)
         {
             if(steam3 != null)
@@ -412,6 +441,69 @@ namespace DepotDownloader
             {
                 Console.WriteLine("App {0} was not completely downloaded.", appId);
             }
+        }
+        
+        static DepotDownloadInfo GetDepotInfo(uint workshopId, uint appId)
+        {
+            if(steam3 != null && appId != INVALID_APP_ID)
+                steam3.RequestAppInfo((uint)appId);
+
+            string contentName = GetAppOrDepotName(INVALID_DEPOT_ID, appId);
+
+            // TODO: is this check needed?
+            // TODO: fix uint.maxValue
+            if (steam3 == null || appId == INVALID_APP_ID || workshopId == uint.MaxValue)
+            {
+                Console.WriteLine("steam3 or appid or workshop item id invalid");
+                return null;
+            }
+
+            // TODO: how to check if workshop item has access? maybe from WorkshopItemInfo?
+            if (!AccountHasAccess(appId))
+            {    
+                Console.WriteLine("App {0} ({1}) is not available from this account.", appId, contentName);
+                return null;
+            }
+
+            steam3.GetWorkshopItemInfo(appId, workshopId);
+            
+            SteamAppsExtensions.CMsgClientWorkshopItemInfoResponse.WorkshopItemInfo itemInfo = null;
+            if (!steam3.WorkshopItems.TryGetValue(workshopId, out itemInfo))
+            {
+                Console.WriteLine("Unable to find workshop item info");
+                return null;
+            }
+            
+            ulong manifestID = itemInfo.manifest_id;
+            if (manifestID == INVALID_MANIFEST_ID)
+            {
+                Console.WriteLine("WorkshopItemInfo {0} missing manifest id", itemInfo.published_file_id);
+                return null;
+            }
+
+            string installDir;
+            if (!CreateDirectories(workshopId, itemInfo.time_updated, out installDir))
+            {
+                Console.WriteLine("Error: Unable to create install directories!");
+                return null;
+            }
+
+            if(steam3 != null)
+                steam3.RequestAppTicket((uint)appId);
+
+
+            steam3.RequestDepotKey( appId, appId );
+            if (!steam3.DepotKeys.ContainsKey(appId))
+            {
+                Console.WriteLine("No valid depot key for {0}, unable to download.", appId);
+                return null;
+            }
+
+            byte[] depotKey = steam3.DepotKeys[appId];
+
+            var info = new DepotDownloadInfo( appId, manifestID, installDir, contentName );
+            info.depotKey = depotKey;
+            return info;
         }
 
         static DepotDownloadInfo GetDepotInfo(uint depotId, uint appId, string branch)

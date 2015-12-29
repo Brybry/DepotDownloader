@@ -7,6 +7,237 @@ using System.Linq;
 
 namespace DepotDownloader
 {
+    // Hack to add current and new code to SteamKit2 because I'm too lazy to rebuild it
+    // TODO: add to SteamKit2 itself and then bump version requirement
+    public static class SteamAppsExtensions
+    {
+        #region WorkshopItemInfoRequest/Response hack
+        [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"CMsgClientWorkshopItemInfoRequest")]
+        public partial class CMsgClientWorkshopItemInfoRequest : global::ProtoBuf.IExtensible
+        {
+            public CMsgClientWorkshopItemInfoRequest() {}
+            
+
+            private uint _app_id = default(uint);
+            [global::ProtoBuf.ProtoMember(1, IsRequired = false, Name=@"app_id", DataFormat = global::ProtoBuf.DataFormat.TwosComplement)]
+            [global::System.ComponentModel.DefaultValue(default(uint))]
+            public uint app_id
+            {
+            get { return _app_id; }
+            set { _app_id = value; }
+            }
+
+            private uint _last_time_updated = default(uint);
+            [global::ProtoBuf.ProtoMember(2, IsRequired = false, Name=@"last_time_updated", DataFormat = global::ProtoBuf.DataFormat.TwosComplement)]
+            [global::System.ComponentModel.DefaultValue(default(uint))]
+            public uint last_time_updated
+            {
+            get { return _last_time_updated; }
+            set { _last_time_updated = value; }
+            }
+            private readonly global::System.Collections.Generic.List<CMsgClientWorkshopItemInfoRequest.WorkshopItem> _workshop_items = new global::System.Collections.Generic.List<CMsgClientWorkshopItemInfoRequest.WorkshopItem>();
+            [global::ProtoBuf.ProtoMember(3, Name=@"workshop_items", DataFormat = global::ProtoBuf.DataFormat.Default)]
+            public global::System.Collections.Generic.List<CMsgClientWorkshopItemInfoRequest.WorkshopItem> workshop_items
+            {
+            get { return _workshop_items; }
+            }
+        
+        [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"WorkshopItem")]
+        public partial class WorkshopItem : global::ProtoBuf.IExtensible
+        {
+            public WorkshopItem() {}
+            
+
+            private ulong _published_file_id = default(ulong);
+            [global::ProtoBuf.ProtoMember(1, IsRequired = false, Name=@"published_file_id", DataFormat = global::ProtoBuf.DataFormat.FixedSize)]
+            [global::System.ComponentModel.DefaultValue(default(ulong))]
+            public ulong published_file_id
+            {
+            get { return _published_file_id; }
+            set { _published_file_id = value; }
+            }
+
+            private uint _time_updated = default(uint);
+            [global::ProtoBuf.ProtoMember(2, IsRequired = false, Name=@"time_updated", DataFormat = global::ProtoBuf.DataFormat.TwosComplement)]
+            [global::System.ComponentModel.DefaultValue(default(uint))]
+            public uint time_updated
+            {
+            get { return _time_updated; }
+            set { _time_updated = value; }
+            }
+            private global::ProtoBuf.IExtension extensionObject;
+            global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
+            { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
+        }
+        
+            private global::ProtoBuf.IExtension extensionObject;
+            global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
+            { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
+        }
+        
+        [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"CMsgClientWorkshopItemInfoResponse")]
+        public partial class CMsgClientWorkshopItemInfoResponse : global::ProtoBuf.IExtensible
+        {
+            public CMsgClientWorkshopItemInfoResponse() {}
+            
+
+            private int _eresult = (int)2;
+            [global::ProtoBuf.ProtoMember(1, IsRequired = false, Name=@"eresult", DataFormat = global::ProtoBuf.DataFormat.TwosComplement)]
+            [global::System.ComponentModel.DefaultValue((int)2)]
+            public int eresult
+            {
+            get { return _eresult; }
+            set { _eresult = value; }
+            }
+
+            private uint _update_time = default(uint);
+            [global::ProtoBuf.ProtoMember(2, IsRequired = false, Name=@"update_time", DataFormat = global::ProtoBuf.DataFormat.TwosComplement)]
+            [global::System.ComponentModel.DefaultValue(default(uint))]
+            public uint update_time
+            {
+            get { return _update_time; }
+            set { _update_time = value; }
+            }
+            private readonly global::System.Collections.Generic.List<CMsgClientWorkshopItemInfoResponse.WorkshopItemInfo> _workshop_items = new global::System.Collections.Generic.List<CMsgClientWorkshopItemInfoResponse.WorkshopItemInfo>();
+            [global::ProtoBuf.ProtoMember(3, Name=@"workshop_items", DataFormat = global::ProtoBuf.DataFormat.Default)]
+            public global::System.Collections.Generic.List<CMsgClientWorkshopItemInfoResponse.WorkshopItemInfo> workshop_items
+            {
+            get { return _workshop_items; }
+            }
+        
+            private readonly global::System.Collections.Generic.List<ulong> _private_items = new global::System.Collections.Generic.List<ulong>();
+            [global::ProtoBuf.ProtoMember(4, Name=@"private_items", DataFormat = global::ProtoBuf.DataFormat.FixedSize)]
+            public global::System.Collections.Generic.List<ulong> private_items
+            {
+            get { return _private_items; }
+            }
+        
+        [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"WorkshopItemInfo")]
+        public partial class WorkshopItemInfo : global::ProtoBuf.IExtensible
+        {
+            public WorkshopItemInfo() {}
+            
+
+            private ulong _published_file_id = default(ulong);
+            [global::ProtoBuf.ProtoMember(1, IsRequired = false, Name=@"published_file_id", DataFormat = global::ProtoBuf.DataFormat.FixedSize)]
+            [global::System.ComponentModel.DefaultValue(default(ulong))]
+            public ulong published_file_id
+            {
+            get { return _published_file_id; }
+            set { _published_file_id = value; }
+            }
+
+            private uint _time_updated = default(uint);
+            [global::ProtoBuf.ProtoMember(2, IsRequired = false, Name=@"time_updated", DataFormat = global::ProtoBuf.DataFormat.TwosComplement)]
+            [global::System.ComponentModel.DefaultValue(default(uint))]
+            public uint time_updated
+            {
+            get { return _time_updated; }
+            set { _time_updated = value; }
+            }
+
+            private ulong _manifest_id = default(ulong);
+            [global::ProtoBuf.ProtoMember(3, IsRequired = false, Name=@"manifest_id", DataFormat = global::ProtoBuf.DataFormat.FixedSize)]
+            [global::System.ComponentModel.DefaultValue(default(ulong))]
+            public ulong manifest_id
+            {
+            get { return _manifest_id; }
+            set { _manifest_id = value; }
+            }
+
+            private bool _is_legacy = default(bool);
+            [global::ProtoBuf.ProtoMember(4, IsRequired = false, Name=@"is_legacy", DataFormat = global::ProtoBuf.DataFormat.Default)]
+            [global::System.ComponentModel.DefaultValue(default(bool))]
+            public bool is_legacy
+            {
+            get { return _is_legacy; }
+            set { _is_legacy = value; }
+            }
+            private global::ProtoBuf.IExtension extensionObject;
+            global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
+            { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
+        }
+        
+            private global::ProtoBuf.IExtension extensionObject;
+            global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
+            { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
+        }        
+        #endregion
+
+        #region New Handler         
+        public class DepotHandler : ClientMsgHandler
+        {
+            // TODO: Use ReadOnlyCollection instead of List?
+            public class WorkshopItemInfoRequestCallback : CallbackMsg
+            {
+                /// <summary>
+                /// Gets the result of requesting workshop item's info 
+                /// </summary>
+                public EResult Result { get; private set; }
+                
+                /// <summary>
+                /// Gets ???
+                /// </summary>
+                public uint UpdateTime { get; private set; }
+
+                /// <summary>
+                /// Gets the actual workshop item info
+                /// </summary>
+                public List<CMsgClientWorkshopItemInfoResponse.WorkshopItemInfo> ItemInfo { get; private set; }
+
+                /// <summary>
+                /// Gets ???
+                /// </summary>
+                public List<ulong> PrivateItems  { get; private set; }
+                
+                internal WorkshopItemInfoRequestCallback( JobID jobID, CMsgClientWorkshopItemInfoResponse msg )
+                {
+                    JobID = jobID;
+                    Result = ( EResult )msg.eresult;
+                    UpdateTime = msg.update_time;
+                    ItemInfo = msg.workshop_items;
+                    PrivateItems = msg.private_items;                
+                }
+            }
+            
+            public JobID GetWorkshopItemInfo(uint appid, ulong itemid)
+            {
+                // var request = new ClientMsgProtobuf<CMsgClientWorkshopItemInfoRequest>( EMsg.ClientWorkshopItemInfoRequest );
+                var request = new ClientMsgProtobuf<CMsgClientWorkshopItemInfoRequest>( (EMsg)7384 );
+               
+                request.SourceJobID = Client.GetNextJobID();
+                request.Body.app_id = appid;
+                var item = new CMsgClientWorkshopItemInfoRequest.WorkshopItem();
+                item.published_file_id = itemid;
+                request.Body.workshop_items.Add(item);
+                
+                Client.Send(request);
+                return request.SourceJobID;
+            }
+            
+            public override void HandleMsg( IPacketMsg packetMsg )
+            {
+                switch ( packetMsg.MsgType )
+                {
+
+                    //case EMsg.ClientWorkshopItemInfoResponse:
+                    case (EMsg)7385:
+                        HandleWorkshopItemInfoResponse( packetMsg );
+                        break;
+
+                }            
+            }
+
+            void HandleWorkshopItemInfoResponse( IPacketMsg packetMsg )
+            {
+                var response = new ClientMsgProtobuf<CMsgClientWorkshopItemInfoResponse>( packetMsg );
+                var callback = new WorkshopItemInfoRequestCallback(response.TargetJobID, response.Body);
+                this.Client.PostCallback( callback );
+            }
+        
+        }
+        #endregion
+    }
 
     class Steam3Session
     {
@@ -30,6 +261,8 @@ namespace DepotDownloader
         public Dictionary<uint, byte[]> AppTickets { get; private set; }
         public Dictionary<uint, ulong> AppTokens { get; private set; }
         public Dictionary<uint, byte[]> DepotKeys { get; private set; }
+        // TODO: fix this lol
+        public Dictionary<ulong, SteamAppsExtensions.CMsgClientWorkshopItemInfoResponse.WorkshopItemInfo> WorkshopItems { get; private set; }
         public Dictionary<Tuple<uint, string>, SteamApps.CDNAuthTokenCallback> CDNAuthTokens { get; private set; }
         public Dictionary<uint, SteamApps.PICSProductInfoCallback.PICSProductInfo> AppInfo { get; private set; }
         public Dictionary<uint, SteamApps.PICSProductInfoCallback.PICSProductInfo> PackageInfo { get; private set; }
@@ -37,6 +270,7 @@ namespace DepotDownloader
         public SteamClient steamClient;
         public SteamUser steamUser;
         SteamApps steamApps;
+        public SteamAppsExtensions.DepotHandler steamDepot;
 
         CallbackManager callbacks;
 
@@ -70,14 +304,18 @@ namespace DepotDownloader
             this.AppTickets = new Dictionary<uint, byte[]>();
             this.AppTokens = new Dictionary<uint, ulong>();
             this.DepotKeys = new Dictionary<uint, byte[]>();
+            this.WorkshopItems = new Dictionary<ulong, SteamAppsExtensions.CMsgClientWorkshopItemInfoResponse.WorkshopItemInfo>();
             this.CDNAuthTokens = new Dictionary<Tuple<uint, string>, SteamApps.CDNAuthTokenCallback>();
             this.AppInfo = new Dictionary<uint, SteamApps.PICSProductInfoCallback.PICSProductInfo>();
             this.PackageInfo = new Dictionary<uint, SteamApps.PICSProductInfoCallback.PICSProductInfo>();
 
             this.steamClient = new SteamClient();
+            
+            this.steamClient.AddHandler( new SteamAppsExtensions.DepotHandler() );
 
             this.steamUser = this.steamClient.GetHandler<SteamUser>();
             this.steamApps = this.steamClient.GetHandler<SteamApps>();
+            this.steamDepot = this.steamClient.GetHandler<SteamAppsExtensions.DepotHandler>();
 
             this.callbacks = new CallbackManager(this.steamClient);
 
@@ -309,6 +547,31 @@ namespace DepotDownloader
             }, () => { return completed; });
         }
 
+        public void GetWorkshopItemInfo(uint appid, uint itemid)
+        {
+            bool completed = false;
+            Action<SteamAppsExtensions.DepotHandler.WorkshopItemInfoRequestCallback> cbMethod = (response) =>
+            {
+                completed = true;
+                Console.WriteLine("Got workshop item info.");
+                if (response.Result != EResult.OK)
+                {
+                    Abort();
+                    return;
+                }
+ 
+                foreach (var itemInfo in response.ItemInfo)
+                {
+                    this.WorkshopItems[itemInfo.published_file_id] = itemInfo;
+                }
+            };
+            
+            WaitUntilCallback(() =>
+            {
+                callbacks.Subscribe(steamDepot.GetWorkshopItemInfo(appid, itemid), cbMethod);
+            }, () => { return completed; });
+        }
+        
         void Connect()
         {
             bAborted = false;
